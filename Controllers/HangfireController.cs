@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -8,13 +9,30 @@ using System.Threading.Tasks;
 namespace HangfireTest.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class HangfireController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult Get()
+        [HttpPost]
+        [Route("[action]")]
+        public IActionResult Welcome()
         {
-            return Ok("test basarili");
+            var jobId = BackgroundJob.Enqueue(() => SendWelcomeEMail("Welcome test application"));
+
+            return Ok($"Job Id: {jobId} Welcome mail send to the user!");
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        public IActionResult DbUpdate()
+        {
+            RecurringJob.AddOrUpdate(() => Console.WriteLine("test zamanlamalı"), Cron.Minutely);
+
+            return Ok("test zamanlama tamam.");
+        }
+
+        public void SendWelcomeEMail(string text)
+        {
+            Console.WriteLine(text);
         }
     }
 }
